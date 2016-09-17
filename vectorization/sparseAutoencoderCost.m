@@ -43,47 +43,33 @@ b2grad = zeros(size(b2));
 %
 
 [m, n] = size(data);
-rho = zeros(25, 1);
 
-for i = 1 : n,
-    x = data(:, i);         % input, equivalent of a1, 64 * 1
-    Z2 = W1 * x + b1;       % 25 * 1
-    a2 = sigmoid(Z2);       % the hidden layer output, 25 * 1
-    rho = rho + a2;
-end;
+% forward propagation
+Z2 = W1 * data + repmat(b1, 1, n);
+a2 = sigmoid(Z2);
+Z3 = W2 * a2 + repmat(b2, 1, n);
+h = sigmoid(Z3);
 
-rho_j = rho ./ n;
+rho_hat = sum(a2, 2) ./ n;
+rho = sparsityParam;
+sparsity_delta = - rho ./ rho_hat + (1 - rho) ./ (1 - rho_hat);
 
-for i = 1 : n,
-    x = data(:, i);         % input, equivalent of a1, 64 * 1
-    Z2 = W1 * x + b1;       % 25 * 1
-    a2 = sigmoid(Z2);       % the hidden layer output, 25 * 1
-    Z3 = W2 * a2 + b2;      % 64 * 1
-    h = sigmoid(Z3);        % final layer output, 64 * 1
+% backpropagation
+delta3 = (h - data) .* fprime(Z3);
+delta2 = (W2' * delta3 + repmat(beta .* sparsity_delta, 1, n)) .* fprime(Z2);
 
-    % compute cost
-    cost = cost + (h - x)' * (h - x) / 2;
+W2grad = delta3 * a2' ./ n + lambda .* W2;
+b2grad = sum(delta3, 2) ./ n;
+W1grad = delta2 * data' ./ n + lambda .* W1;
+b1grad = sum(delta2, 2) ./ n;
 
-    % backpropagation
-    delta3 = (h - x) .* (h .* (1 - h));    % 64 * 1
-    W2grad = W2grad + delta3 * a2';  % 64 * 25
-    b2grad = b2grad + delta3;        % 64 * 1
-    delta2 = ((W2' * delta3) + beta .* (- sparsityParam ./ rho_j ...
-            + (1 - sparsityParam) ./ (1 - rho_j))) ...
-            .* (a2 .* (1 - a2));     % 25 * 1
-    W1grad = W1grad + delta2 * x';   % 25 * 64
-    b1grad = b1grad + delta2;        % 25 * 1
-end;
 
-KL = sum(sparsityParam .* log(sparsityParam ./ rho_j) + ...
-        (1 - sparsityParam) .* log((1 - sparsityParam) ./ (1 - rho_j)));
+KL = sum(rho .* log(rho ./ rho_hat) + ...
+        (1 - rho) .* log((1 - rho) ./ (1 - rho_hat)));
 
-cost = cost / n + (lambda / 2) ...
-         .* (sum(sum(W1 .^ 2)) + sum(sum(W2 .^ 2))) + beta * KL;
-W2grad = W2grad ./ n + lambda .* W2;
-W1grad = W1grad ./ n + lambda .* W1;
-b2grad = b2grad ./ n;
-b1grad = b1grad ./ n;
+cost = sum(sum((h - data) .^ 2, 2)) ./ (2 * n) + ...
+       (lambda / 2) * (sum(sum(W1 .^ 2)) + sum(sum(W2 .^ 2))) + ...
+       beta * KL;
 
 
 %-------------------------------------------------------------------
@@ -101,7 +87,11 @@ end
 % column) vector (say (z1, z2, z3)) and returns (f(z1), f(z2), f(z3)).
 
 function sigm = sigmoid(x)
-
     sigm = 1 ./ (1 + exp(-x));
+end
+
+%% fprime: sigmoid'
+function [outputs] = fprime(x)
+    outputs = sigmoid(x) .* (1 - sigmoid(x));
 end
 
