@@ -1,58 +1,49 @@
-# Exercise:Sparse Autoencoder
+# Exercise:Vectorization
 
-http://deeplearning.stanford.edu/wiki/index.php/Exercise:Sparse_Autoencoder
+http://deeplearning.stanford.edu/wiki/index.php/Exercise:Vectorization
 
-## Sparse autoencoder implementation
+In the previous problem set, we implemented a sparse autoencoder for patches taken from natural images. In this problem set, you will vectorize your code to make it run much faster, and further adapt your sparse autoencoder to work on images of handwritten digits. Your network for learning from handwritten digits will be much larger than the one you'd trained on the natural images, and so using the original implementation would have been painfully slow. But with a vectorized implementation of the autoencoder, you will be able to get this to run in a reasonable amount of computation time.
 
-In this problem set, you will implement the sparse autoencoder algorithm, and show how it discovers that edges are a good representation for natural images. (Images provided by Bruno Olshausen.) The sparse autoencoder algorithm is described in the lecture notes found on the course website.
+## Support Code/Data
 
-In the file [sparseae_exercise.zip](http://ufldl.stanford.edu/wiki/resources/sparseae_exercise.zip), we have provided some starter code in Matlab. You should write your code at the places indicated in the files ("YOUR CODE HERE"). You have to complete the following files: `sampleIMAGES.m`, `sparseAutoencoderCost.m`, `computeNumericalGradient.m`. The starter code in `train.m` shows how these functions are used.
+The following additional files are required for this exercise:
+* [MNIST Dataset (Training Images)](http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz)
+* [MNIST Dataset (Training Labels)](http://yann.lecun.com/exdb/mnist/train-labels-idx1-ubyte.gz)
+* [Support functions for loading MNIST in Matlab](http://deeplearning.stanford.edu/wiki/index.php/Using_the_MNIST_Dataset)
 
-Specifically, in this exercise you will implement a sparse autoencoder, trained with 8×8 image patches using the L-BFGS optimization algorithm.
-A note on the software: The provided .zip file includes a subdirectory minFunc with 3rd party software implementing L-BFGS, that is licensed under a Creative Commons, Attribute, Non-Commercial license. If you need to use this software for commercial purposes, you can download and use a different function (fminlbfgs) that can serve the same purpose, but runs ~3x slower for this exercise (and thus is less recommended). You can read more about this in the [Fminlbfgs_Details](http://deeplearning.stanford.edu/wiki/index.php/Fminlbfgs_Details) page.
+## Step 1: Vectorize your Sparse Autoencoder Implementation
 
-## Step 1: Generate training set
+Using the ideas from [Vectorization](http://deeplearning.stanford.edu/wiki/index.php/Vectorization) and [Neural Network Vectorization](http://deeplearning.stanford.edu/wiki/index.php/Neural_Network_Vectorization), vectorize your implementation of `sparseAutoencoderCost.m`. In our implementation, we were able to remove all for-loops with the use of matrix operations and `repmat`. (If you want to play with more advanced vectorization ideas, also type help `bsxfun`. The `bsxfun` function provides an alternative to `repmat` for some of the vectorization steps, but is not necessary for this exercise). A vectorized version of our sparse autoencoder code ran in under one minute on a fast computer (for learning 25 features from 10000 8x8 image patches).
 
-The first step is to generate a training set. To get a single training example x, randomly pick one of the 10 images, then randomly sample an 8×8 image patch from the selected image, and convert the image patch (either in row-major order or column-major order; it doesn't matter) into a 64-dimensional vector to get a training example $$x \in \Re^{64}$$.
+(Note that you do not need to vectorize the code in the other files.)
 
-Complete the code in `sampleIMAGES.m`. Your code should sample 10000 image patches and concatenate them into a 64×10000 matrix.
-To make sure your implementation is working, run the code in "Step 1" of `train.m`. This should result in a plot of a random sample of 200 patches from the dataset.
+## Step 2: Learn features for handwritten digits
 
-Implementational tip: When we run our implemented `sampleImages()`, it takes under 5 seconds. If your implementation takes over 30 seconds, it may be because you are accidentally making a copy of an entire 512×512 image each time you're picking a random image. By copying a 512×512 image 10000 times, this can make your implementation much less efficient. While this doesn't slow down your code significantly for this exercise (because we have only 10000 examples), when we scale to much larger problems later this quarter with 106 or more examples, this will significantly slow down your code. Please implement `sampleIMAGES` so that you aren't making a copy of an entire 512×512 image each time you need to cut out an 8x8 image patch.
+Now that you have vectorized the code, it is easy to learn larger sets of features on medium sized images. In this part of the exercise, you will use your sparse autoencoder to learn features for handwritten digits from the MNIST dataset.
 
-## Step 2: Sparse autoencoder objective
+The MNIST data is available at Download the file `train-images-idx3-ubyte.gz` and decompress it. After obtaining the source images, you should use helper functions that we provide to load the data into Matlab as matrices. While the helper functions that we provide will load both the input examples x and the class labels y, for this assignment, you will only need the input examples x since the sparse autoencoder is an unsupervised learning algorithm. (In a later assignment, we will use the labels y as well.)
 
-Implement code to compute the sparse autoencoder cost function $$Jsparse(W,b)$$ (Section 3 of the lecture notes) and the corresponding derivatives of Jsparse with respect to the different parameters. Use the sigmoid function for the activation function,  $$f(z) = \frac{1}{{1+e^{-z}}}$$. In particular, complete the code in sparseAutoencoderCost.m.
+The following set of parameters worked well for us to learn good features on the MNIST dataset:
 
-The sparse autoencoder is parameterized by matrices  $$W^{(1)} \in \Re^{s_1\times s_2}, W^{(2)} \in \Re^{s_2\times s_3}$$ vectors  $$b^{(1)} \in \Re^{s_2}$$,  $$b^{(2)} \in \Re^{s_3}$$. However, for subsequent notational convenience, we will "unroll" all of these parameters into a very long parameter vector $$θ$$ with $$s_1s_2 + s_2s_3 + s_2 + s_3$$ elements. The code for converting between the $$(W^{(1)},W^{(2)},b^{(1)},b^{(2)})$$ and the $$θ$$ parameterization is already provided in the starter code.
+```matlab
+visibleSize = 28*28
+hiddenSize = 196
+sparsityParam = 0.1
+lambda = 3e-3
+beta = 3
+patches = first 10000 images from the MNIST dataset
+```
 
-Implementational tip: The objective $$Jsparse(W,b)$$ contains 3 terms, corresponding to the squared error term, the weight decay term, and the sparsity penalty. You're welcome to implement this however you want, but for ease of debugging, you might implement the cost function and derivative computation (backpropagation) only for the squared error term first (this corresponds to setting $$λ = β = 0$$), and implement the gradient checking method in the next section to first verify that this code is correct. Then only after you have verified that the objective and derivative calculations corresponding to the squared error term are working, add in code to compute the weight decay and sparsity penalty terms and their corresponding derivatives.
+After 400 iterations of updates using `minFunc`, your autoencoder should have learned features that resemble pen strokes. In other words, this has learned to represent handwritten characters in terms of what pen strokes appear in an image. Our implementation takes around 15-20 minutes on a fast machine. Visualized, the features should look like the following image:
 
-##Step 3: Gradient checking
+![good](http://deeplearning.stanford.edu/wiki/index.php/File:MnistVectorizationEx.png)
 
-Following Section 2.3 of the lecture notes, implement code for gradient checking. Specifically, complete the code in `computeNumericalGradient.m`. Please use $$EPSILON = 10-4$$ as described in the lecture notes.
+If your parameters are improperly tuned, or if your implementation of the autoencoder is buggy, you may get one of the following images instead:
 
-We've also provided code in checkNumericalGradient.m for you to test your code. This code defines a simple quadratic function $$h: \Re^2 \mapsto \Re$$ given by  $$h(x) = x_1^2 + 3x_1 x_2$$, and evaluates it at the point $$x = (4,10)^T$$. It allows you to verify that your numerically evaluated gradient is very close to the true (analytically computed) gradient.
+![bad](http://deeplearning.stanford.edu/wiki/index.php/File:MNIST-false-bad-2.png)
 
-After using `checkNumericalGradient.m` to make sure your implementation is correct, next use `computeNumericalGradient.m` to make sure that your `sparseAutoencoderCost.m` is computing derivatives correctly. For details, see Steps 3 in `train.m`. We strongly encourage you not to proceed to the next step until you've verified that your derivative computations are correct.
+If your image looks like one of the above images, check your code and parameters again. Learning these features are a prelude to the later exercises, where we shall see how they will be useful for classification.
 
-Implementational tip: If you are debugging your code, performing gradient checking on smaller models and smaller training sets (e.g., using only 10 training examples and 1-2 hidden units) may speed things up.
-
-## Step 4: Train the sparse autoencoder
-
-Now that you have code that computes Jsparse and its derivatives, we're ready to minimize Jsparse with respect to its parameters, and thereby train our sparse autoencoder.
-
-We will use the L-BFGS algorithm. This is provided to you in a function called minFunc (code provided by Mark Schmidt) included in the starter code. (For the purpose of this assignment, you only need to call minFunc with the default parameters. You do not need to know how L-BFGS works.) We have already provided code in `train.m` (Step 4) to call `minFunc`. The `minFunc` code assumes that the parameters to be optimized are a long parameter vector; so we will use the "$$θ$$" parameterization rather than the "$$(W^{(1)},W^{(2)},b^{(1)},b^{(2)})$$" parameterization when passing our parameters to it.
-
-Train a sparse autoencoder with 64 input units, 25 hidden units, and 64 output units. In our starter code, we have provided a function for initializing the parameters. We initialize the biases $$b^{(l)}_i to zero, and the weights W^{(l)}_{ij}$$ to random numbers drawn uniformly from the interval $$\left[-\sqrt{\frac{6}{n_{\rm in}+n_{\rm out}+1}},\sqrt{\frac{6}{n_{\rm in}+n_{\rm out}+1}}\,\right]$$, where nin is the fan-in (the number of inputs feeding into a node) and nout is the fan-in (the number of units that a node feeds into).
-
-The values we provided for the various parameters ($$λ$$,$$β$$,$$ρ$$, etc.) should work, but feel free to play with different settings of the parameters as well.
-
-Implementational tip: Once you have your backpropagation implementation correctly computing the derivatives (as verified using gradient checking in Step 3), when you are now using it with L-BFGS to optimize $$Jsparse(W,b)$$, make sure you're not doing gradient-checking on every step. Backpropagation can be used to compute the derivatives of $$Jsparse(W,b)$$ fairly efficiently, and if you were additionally computing the gradient numerically on every step, this would slow down your program significantly.
-
-## Step 5: Visualization
-
-After training the autoencoder, use `display_network.m` to visualize the learned weights. (See `train.m`, Step 5.) Run "`print -djpeg weights.jpg`" to save the visualization to a file "weights.jpg" (which you will submit together with your code).
 
 
 

@@ -1,6 +1,6 @@
 # Answers of the UFLDL Tutorial's exercises
 
-This repository consist of the answers of the [UFLDL Tutorial](http://deeplearning.stanford.edu/wiki/index.php/UFLDL_Tutorial)'s exercises which I did.
+This repository consist of some answers of the [UFLDL Tutorial](http://deeplearning.stanford.edu/wiki/index.php/UFLDL_Tutorial)'s exercises which I did.
 
 ## What is UFLDL Tutorial?
 
