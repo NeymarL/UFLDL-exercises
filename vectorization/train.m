@@ -132,7 +132,7 @@ options.display = 'on';
 %% STEP 5: Visualization
 
 W1 = reshape(opttheta(1:hiddenSize*visibleSize), hiddenSize, visibleSize);
-display_network(W1', 100);
+display_network(W1', 64);
 
 print -djpeg weights.jpg   % save the visualization to a file
 

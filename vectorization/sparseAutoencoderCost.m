@@ -20,7 +20,6 @@ b2 = theta(2*hiddenSize*visibleSize+hiddenSize+1:end);
 
 % Cost and gradient variables (your code needs to compute these values).
 % Here, we initialize them to zeros.
-cost = 0;
 W1grad = zeros(size(W1));
 W2grad = zeros(size(W2));
 b1grad = zeros(size(b1));
