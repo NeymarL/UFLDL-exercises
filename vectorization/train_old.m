@@ -14,12 +14,12 @@
 %  allow your sparse autoencoder to get good filters; you do not need to
 %  change the parameters below.
 
-visibleSize = 28*28;   % number of input units
-hiddenSize = 196;     % number of hidden units
-sparsityParam = 0.1;   % desired average activation of the hidden units.
+visibleSize = 8*8;   % number of input units
+hiddenSize = 25;     % number of hidden units
+sparsityParam = 0.01;   % desired average activation of the hidden units.
                      % (This was denoted by the Greek alphabet rho, which looks like a lower-case "p",
 		     %  in the lecture notes).
-lambda = 3e-3;     % weight decay parameter
+lambda = 0.0001;     % weight decay parameter
 beta = 3;            % weight of sparsity penalty term
 numpatches = 10000;
 
@@ -29,16 +29,8 @@ numpatches = 10000;
 %  After implementing sampleIMAGES, the display_network command should
 %  display a random sample of 200 patches from the dataset
 
-% Change the filenames if you've saved the files under different names
-% On some platforms, the files might be saved as 
-% train-images.idx3-ubyte / train-labels.idx1-ubyte
-images = loadMNISTImages('train-images-idx3-ubyte');
-labels = loadMNISTLabels('train-labels-idx1-ubyte');
- 
-% We are using display_network from the autoencoder code
-display_network(images(:,1:100)); % Show the first 100 images
-
-patches = images(:, 1:numpatches);
+patches = sampleIMAGES(numpatches);
+display_network(patches(:,randi(size(patches,2),200,1)),8);
 
 
 %  Obtain random parameters theta
@@ -100,6 +92,7 @@ theta = initializeParameters(hiddenSize, visibleSize);
 %diff = norm(numgrad-grad)/norm(numgrad+grad);
 %disp(diff); % Should be small. In our implementation, these values are
             % usually less than 1e-9.
+
             % When you got this working, Congratulations!!!
 
 %%======================================================================
@@ -131,8 +124,8 @@ options.display = 'on';
 %% STEP 5: Visualization
 
 W1 = reshape(opttheta(1:hiddenSize*visibleSize), hiddenSize, visibleSize);
-display_network(W1');
+display_network(W1', 12);
 
-print -djpeg weights.jpg   % save the visualization to a file
+print -djpeg exp1.jpg   % save the visualization to a file
 
 
