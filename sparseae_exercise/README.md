@@ -54,5 +54,5 @@ Implementational tip: Once you have your backpropagation implementation correctl
 
 After training the autoencoder, use `display_network.m` to visualize the learned weights. (See `train.m`, Step 5.) Run "`print -djpeg weights.jpg`" to save the visualization to a file "weights.jpg" (which you will submit together with your code).
 
-
+![Weights](weights.jpg)
 
