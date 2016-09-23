@@ -20,6 +20,8 @@ title('Raw data');
 
 % -------------------- YOUR CODE HERE -------------------- 
 u = zeros(size(x, 1)); % You need to compute this
+sigma = x * x' / size(x, 2);
+[u,S,V] = svd(sigma);
 
 
 % -------------------------------------------------------- 
@@ -36,7 +38,7 @@ hold off
 
 % -------------------- YOUR CODE HERE -------------------- 
 xRot = zeros(size(x)); % You need to compute this
-
+xRot = u' * x;  
 
 % -------------------------------------------------------- 
 
@@ -55,8 +57,7 @@ title('xRot');
 % -------------------- YOUR CODE HERE -------------------- 
 k = 1; % Use k = 1 and project the data onto the first eigenbasis
 xHat = zeros(size(x)); % You need to compute this
-
-
+xHat = [u(:,1:k), zeros(size(u(:,k:end)))]' * x;
 
 % -------------------------------------------------------- 
 figure(3);
@@ -71,7 +72,7 @@ title('xHat');
 epsilon = 1e-5;
 % -------------------- YOUR CODE HERE -------------------- 
 xPCAWhite = zeros(size(x)); % You need to compute this
-
+xPCAWhite = diag(1./sqrt(diag(S) + epsilon)) * u' * x;
 
 
 
@@ -86,7 +87,7 @@ title('xPCAWhite');
 
 % -------------------- YOUR CODE HERE -------------------- 
 xZCAWhite = zeros(size(x)); % You need to compute this
-
+xZCAWhite = u * diag(1./sqrt(diag(S) + epsilon)) * u' * x;
 
 % -------------------------------------------------------- 
 figure(5);
