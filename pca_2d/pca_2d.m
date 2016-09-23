@@ -57,7 +57,7 @@ title('xRot');
 % -------------------- YOUR CODE HERE -------------------- 
 k = 1; % Use k = 1 and project the data onto the first eigenbasis
 xHat = zeros(size(x)); % You need to compute this
-xHat = [u(:,1:k), zeros(size(u(:,k:end)))]' * x;
+xHat = u(:, 1:k) * xRot(1:k, :);
 
 % -------------------------------------------------------- 
 figure(3);
